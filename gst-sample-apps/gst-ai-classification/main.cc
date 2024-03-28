@@ -249,7 +249,7 @@ create_pipe (GstAppContext * appctx, GstModelType model_type,
   module_id = get_enum_value (qtimlvclassification, "module", "mobilenet");
   if (module_id != -1) {
     g_object_set (G_OBJECT (qtimlvclassification),
-        "threshold", 50.0, "results", 2,
+        "threshold", 40.0, "results", 2,
         "module", module_id, "labels", labels_path, NULL);
   } else {
     g_printerr ("Module mobilenet is not available in qtimlvclassification.\n");
@@ -331,8 +331,8 @@ create_pipe (GstAppContext * appctx, GstModelType model_type,
   g_value_init (&position, GST_TYPE_ARRAY);
   g_value_init (&dimension, GST_TYPE_ARRAY);
 
-  pos_vals[0] = 0;
-  pos_vals[1] = 0;
+  pos_vals[0] = 30;
+  pos_vals[1] = 30;
   dim_vals[0] = 320;
   dim_vals[1] = 180;
   build_pad_property (&position, pos_vals, 2);

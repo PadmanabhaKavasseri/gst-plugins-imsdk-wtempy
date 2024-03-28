@@ -9,14 +9,14 @@
  *
  * Description:
  * The application takes video stream from camera/file/rtsp and maximum of
- * 9 streams in parallel and give to Yolo models for object detection and
+ * 6 streams in parallel and give to Yolo models for object detection and
  * AI Model output (Labels & Bounding Boxes) overlayed on incoming videos
  * are arranged in a grid pattern to be displayed on HDMI Screen, save as
  * h264 encoded mp4 file or streamed over rtsp server running on device.
  * Any combination of inputs and outputs can be configured with commandline
  * options. Camera default resolution is set to 1280x720. Display will be
  * full screen for 1 input stream, divided into 2x2 grid for 2-4 input streams
- * and divided into 3x3 grid for 5-9 streams.
+ * and divided into 3x3 grid for 5-6 streams.
  *
  * Pipeline for Gstreamer:
  * Source -> tee (SPLIT)
@@ -33,6 +33,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <glib-unix.h>
+
+#include <sys/resource.h>
+
 #include <gst/gst.h>
 #include <gst/video/video.h>
 
@@ -1103,9 +1106,24 @@ main (gint argc, gchar * argv[])
   const gchar *app_name = NULL;
   GstAppContext appctx = {};
   GstAppOptions options = {};
+  struct rlimit rl;
   guint intrpt_watch_id = 0;
   gboolean ret = FALSE;
   gchar help_description[1024];
+
+  // Define the new limit
+  rl.rlim_cur = 4096; // Soft limit
+  rl.rlim_max = 4096; // Hard limit
+
+  // Set the new limit
+  if (setrlimit (RLIMIT_NOFILE, &rl) != 0) {
+    g_printerr ("Failed to set setrlimit\n");
+  }
+
+  // Get the current limit
+  if (getrlimit (RLIMIT_NOFILE, &rl) != 0) {
+    g_printerr ("Failed to get getrlimit\n");
+  }
 
   // Set Display environment variables
   setenv ("XDG_RUNTIME_DIR", "/run/user/root", 0);
@@ -1255,6 +1273,11 @@ main (gint argc, gchar * argv[])
     g_printerr ("use only same kind of input, like %d camera or %d files or"
         " %d rtsp inputs\n", MAX_CAMSRCS, MAX_FILESRCS, MAX_RTSPSRCS);
     return -1;
+  }
+
+  if (options.camera_id < -1 || options.camera_id > 1) {
+    g_printerr ("invalid camera id: %d\n", options.camera_id);
+    return -EINVAL;
   }
 
   if (options.input_count == 0 ||
