@@ -3,6 +3,57 @@
 cmake_minimum_required(VERSION 3.10)
 project(gst-plugins-qti-oss LANGUAGES C CXX)
 
+# Set default values for build configuration
+if(NOT DEFINED GST_VERSION_REQUIRED)
+  set(GST_VERSION_REQUIRED "1.20.1" CACHE STRING "GStreamer minimum required version")
+endif()
+
+if(NOT DEFINED GST_PLUGINS_QTI_OSS_VERSION)
+  set(GST_PLUGINS_QTI_OSS_VERSION "1.0.0" CACHE STRING "GST Plugins QTI OSS version")
+endif()
+
+if(NOT DEFINED SYSROOT_INCDIR)
+  set(SYSROOT_INCDIR "/usr/include" CACHE PATH "System root include directory")
+endif()
+
+if(NOT DEFINED SYSROOT_LIBDIR)
+  set(SYSROOT_LIBDIR "/usr/lib" CACHE PATH "System root library directory")
+endif()
+
+if(NOT DEFINED GST_PLUGINS_QTI_OSS_INSTALL_LIBDIR)
+  set(GST_PLUGINS_QTI_OSS_INSTALL_LIBDIR "/usr/lib/aarch64-linux-gnu" 
+      CACHE PATH "Installation directory for libraries")
+endif()
+
+if(NOT DEFINED GST_PLUGINS_QTI_OSS_INSTALL_BINDIR)
+  set(GST_PLUGINS_QTI_OSS_INSTALL_BINDIR "/usr/bin" CACHE PATH "Installation directory for binaries")
+endif()
+
+if(NOT DEFINED GST_PLUGINS_QTI_OSS_INSTALL_INCDIR)
+  set(GST_PLUGINS_QTI_OSS_INSTALL_INCDIR "/usr/include" CACHE PATH "Installation directory for headers")
+endif()
+
+if(NOT DEFINED GST_PLUGINS_QTI_OSS_INSTALL_CONFIG)
+  set(GST_PLUGINS_QTI_OSS_INSTALL_CONFIG "/etc/configs" CACHE PATH "Installation directory for configuration")
+endif()
+
+# Set package metadata variables for configure_file substitution
+if(NOT DEFINED GST_PLUGINS_QTI_OSS_LICENSE)
+  set(GST_PLUGINS_QTI_OSS_LICENSE "BSD-3-Clause-Clear")
+endif()
+
+if(NOT DEFINED GST_PLUGINS_QTI_OSS_SUMMARY)
+  set(GST_PLUGINS_QTI_OSS_SUMMARY "Qualcomm open-source GStreamer Plug-ins")
+endif()
+
+if(NOT DEFINED GST_PLUGINS_QTI_OSS_ORIGIN)
+  set(GST_PLUGINS_QTI_OSS_ORIGIN "http://www.qualcomm.com")
+endif()
+
+if(NOT DEFINED GST_PLUGINS_QTI_OSS_PACKAGE)
+  set(GST_PLUGINS_QTI_OSS_PACKAGE "gstreamer1.0-plugins-qcom-oss")
+endif()
+
 # Few plugins have been disabled for now due to unavailable dependent packages.
 # === Core Plugins ===
 #add_subdirectory(gst-plugin-qmmfsrc)
@@ -50,7 +101,7 @@ add_subdirectory(gst-test-framework)
 add_subdirectory(gst-python-examples)
 
 # === Messaging Plugins ===
-add_subdirectory(gst-plugin-msgbroker)
+#add_subdirectory(gst-plugin-msgbroker)
 
 #TODO: Disable based on pkgconfig/header file checks
 if(DEFINED ENABLE_NON_QLI)
