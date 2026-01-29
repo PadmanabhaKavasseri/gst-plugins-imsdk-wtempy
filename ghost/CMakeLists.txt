@@ -1,69 +1,127 @@
-cmake_minimum_required(VERSION 3.10)
-project(gst-qtighost)
-
-# Set C++ standard
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-# Find required packages
-find_package(PkgConfig REQUIRED)
-
-# Find GStreamer packages
-pkg_check_modules(GST REQUIRED 
-    gstreamer-1.0>=1.0
-    gstreamer-base-1.0>=1.0
-    gstreamer-video-1.0>=1.0
+cmake_minimum_required(VERSION 3.18)
+project(GST_PLUGIN_QTI_OSS_TEMPY
+  VERSION ${GST_PLUGINS_QTI_OSS_VERSION}
+  LANGUAGES C CXX
 )
 
-# Find Python and NumPy
-find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(GST_PLUGINS_QTI_OSS_INSTALL_LIBDIR /usr/lib/aarch64-linux-gnu)
 
-# Get GStreamer version separately for display
-pkg_get_variable(GST_VERSION gstreamer-1.0 version)
+# Common compiler flags.
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -fPIC -Wno-unused-parameter -Wno-narrowing")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -fPIC -Wno-error -fexceptions -Wno-unused-parameter -Wno-narrowing")
 
-# Include directories
-include_directories(${GST_INCLUDE_DIRS})
-include_directories(${Python3_INCLUDE_DIRS})
-include_directories(${Python3_NumPy_INCLUDE_DIRS})
+if(NOT DEFINED GST_VERSION_REQUIRED)
+  set(GST_VERSION_REQUIRED "1.20.1" CACHE STRING "GStreamer minimum required version")
+endif()
 
-# Add compiler flags
-add_definitions(${GST_CFLAGS})
+if(NOT DEFINED GST_PLUGINS_QTI_OSS_VERSION)
+  set(GST_PLUGINS_QTI_OSS_VERSION "1.0.0" CACHE STRING "GST Plugins QTI OSS version")
+endif()
 
-# Define package variables as compiler definitions
-add_definitions(
-    "-DPACKAGE=\"gst-qtighost\""
-    "-DPACKAGE_VERSION=\"1.0.0\""
-    "-DPACKAGE_NAME=\"GStreamer QTI Ghost Plugin\""
-    "-DGST_LICENSE=\"LGPL\""
-    "-DGST_PACKAGE_NAME=\"GStreamer QTI Ghost Plugin\""
-    "-DGST_PACKAGE_ORIGIN=\"https://github.com/your-repo/gst-qtighost\""
+if(NOT DEFINED GST_PLUGINS_QTI_OSS_LICENSE)
+  set(GST_PLUGINS_QTI_OSS_LICENSE "BSD-3-Clause-Clear")
+endif()
+
+if(NOT DEFINED GST_PLUGINS_QTI_OSS_SUMMARY)
+  set(GST_PLUGINS_QTI_OSS_SUMMARY "Qualcomm open-source GStreamer Plug-ins")
+endif()
+
+if(NOT DEFINED GST_PLUGINS_QTI_OSS_ORIGIN)
+  set(GST_PLUGINS_QTI_OSS_ORIGIN "http://www.qualcomm.com")
+endif()
+
+if(NOT DEFINED GST_PLUGINS_QTI_OSS_PACKAGE)
+  set(GST_PLUGINS_QTI_OSS_PACKAGE "gstreamer1.0-plugins-qcom-oss")
+endif()
+
+include_directories(${SYSROOT_INCDIR})
+link_directories(${SYSROOT_LIBDIR})
+
+find_package(PkgConfig)
+
+# Get the pkgconfigs exported by the automake tools
+set(GST_VERSION_REQUIRED "1.19.0")
+
+pkg_check_modules(GST
+  REQUIRED gstreamer-1.0>=${GST_VERSION_REQUIRED})
+pkg_check_modules(GST_ALLOC
+  REQUIRED gstreamer-allocators-1.0>=${GST_VERSION_REQUIRED})
+pkg_check_modules(GST_VIDEO
+  REQUIRED gstreamer-video-1.0>=${GST_VERSION_REQUIRED})
+pkg_check_modules(GST_BASE
+  REQUIRED gstreamer-base-1.0>=${GST_VERSION_REQUIRED})
+
+pkg_check_modules(PYTHON3
+  REQUIRED python3)
+
+pkg_check_modules(PY3EMBED REQUIRED python3-embed)
+
+# Generate configuration header file.
+configure_file(config.h.in config.h @ONLY)
+include_directories(${CMAKE_CURRENT_BINARY_DIR} ${Python3_INCLUDE_DIRS}
+                    /usr/lib/python3/dist-packages/numpy/core/include)
+
+# Precompiler definitions.
+add_definitions(-DHAVE_CONFIG_H)
+
+# Common compiler flags.
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -fPIC")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -fPIC")
+
+# GStreamer source plugin.
+set(GST_QTI_TEMPY qtitempy)
+
+add_library(${GST_QTI_TEMPY} SHARED
+  src/qtitempy.c
+  src/ovld.c 
+  src/ppfuncs.c
+  src/py_related.c
 )
 
-# Create the plugin library
-add_library(gstqtighost SHARED
-    qtighost.cpp
+# Ensure position-independent code for the shared library
+set_target_properties(${GST_QTI_TEMPY} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
+message(STATUS "Python3 NumPy include path: ${Python3_NumPy_INCLUDE_DIR}")
+
+target_include_directories(${GST_QTI_TEMPY}
+  PUBLIC
+    ${GST_INCLUDE_DIRS}
+    ${PYTHON3_NUMPY_INCLUDE_DIRS}
+    ${PY3EMBED_INCLUDE_DIRS}
+    ${PYTHON3_INCLUDE_DIRS}
+  PRIVATE
+    ${KERNEL_BUILDDIR}/usr/include
+    inc
 )
 
-# Link libraries
-target_link_libraries(gstqtighost 
+target_link_libraries(${GST_QTI_TEMPY}
+  PRIVATE
     ${GST_LIBRARIES}
-    ${Python3_LIBRARIES}
+    ${GST_ALLOC_LIBRARIES}
+    ${GST_VIDEO_LIBRARIES}
+    ${GST_BASE_LIBRARIES}
+    ${PY3EMBED_LIBRARIES}
+    ${PYTHON3_LIBRARIES}
+    gstqtimlbase
+    gstqtivideobase
+    gstqtiutilsbase
+    gstqtiallocatorsbase
 )
 
-# Set library properties
-set_target_properties(gstqtighost PROPERTIES
-    PREFIX ""  # Remove 'lib' prefix
-    SUFFIX ".so"
+install(
+  TARGETS ${GST_QTI_TEMPY}
+  LIBRARY DESTINATION ${GST_PLUGINS_QTI_OSS_INSTALL_LIBDIR}/gstreamer-1.0
+  PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ
+              GROUP_EXECUTE GROUP_READ
+              WORLD_EXECUTE WORLD_READ
 )
 
-# Installation
-set(PLUGIN_INSTALL_DIR /usr/lib/aarch64-linux-gnu/gstreamer-1.0)
-install(TARGETS gstqtighost LIBRARY DESTINATION ${PLUGIN_INSTALL_DIR} )
+# Specify the file to install
+install(
+    FILES ${CMAKE_CURRENT_SOURCE_DIR}/opencv_processor.py
+    DESTINATION /root
+)
 
-# Print build information
-message(STATUS "Building GStreamer QTI Ghost plugin with Python support")
-message(STATUS "GStreamer version: ${GST_VERSION}")
-message(STATUS "Python version: ${Python3_VERSION}")
-message(STATUS "Python include: ${Python3_INCLUDE_DIRS}")
-message(STATUS "NumPy include: ${Python3_NumPy_INCLUDE_DIRS}")
-message(STATUS "Install destination: ${PLUGIN_INSTALL_DIR}")

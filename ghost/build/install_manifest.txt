@@ -1,0 +1,2 @@
+/usr/lib/aarch64-linux-gnu/gstreamer-1.0/libqtitempy.so
+/root/opencv_processor.py
