@@ -54,6 +54,9 @@ if(NOT DEFINED GST_PLUGINS_QTI_OSS_PACKAGE)
   set(GST_PLUGINS_QTI_OSS_PACKAGE "gstreamer1.0-plugins-qcom-oss")
 endif()
 
+# Build base components FIRST (move this to the top)
+add_subdirectory(gst-plugin-base)
+
 # Few plugins have been disabled for now due to unavailable dependent packages.
 # === Core Plugins ===
 #add_subdirectory(gst-plugin-qmmfsrc)
@@ -69,7 +72,7 @@ add_subdirectory(gst-plugin-restricted-zone)
 add_subdirectory(gst-plugin-rtspbin)
 add_subdirectory(gst-plugin-redissink)
 add_subdirectory(gst-plugin-smartvencbin)
-add_subdirectory(gst-plugin-base)
+# add_subdirectory(gst-plugin-base)
 #add_subdirectory(gst-plugin-camreproc)
 #add_subdirectory(gst-plugin-jpegenc)
 add_subdirectory(gst-plugin-videotemplate)
@@ -93,6 +96,7 @@ add_subdirectory(gst-plugin-metatransform)
 add_subdirectory(gst-plugin-objtracker)
 add_subdirectory(gst-plugin-mlmetaextractor)
 add_subdirectory(gst-plugin-mlpostprocess)
+add_subdirectory(ghost)
 
 # === Sample Apps and Test Framework ===
 add_subdirectory(gst-sample-apps/gst-sample-apps-utils)
