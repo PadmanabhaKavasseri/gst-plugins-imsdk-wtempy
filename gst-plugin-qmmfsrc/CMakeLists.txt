@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8.2)
+cmake_minimum_required(VERSION 3.16)
 project(GST_PLUGIN_QTI_OSS_QMMFSRC
   VERSION ${GST_PLUGINS_QTI_OSS_VERSION}
   LANGUAGES C CXX
@@ -23,7 +23,7 @@ pkg_check_modules(GST_QCOM_UTILS
 pkg_check_modules(GST_QCOM_VIDEO
   REQUIRED gstreamer-qcom-oss-video-1.0>=1.0.0)
 
-# Generate configuration header file.
+# Generate configuration header file with plugin describing definitions
 configure_file(config.h.in config.h @ONLY)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
@@ -35,6 +35,22 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-parameter")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-variable")
+
+# Check whether ANDROID_SENSOR_OPAQUE_RAW_SIZE_MAXIMUM_RESOLUTION is supported
+include(CheckCXXSourceCompiles)
+
+set(SRC
+"
+#include \"system/camera_metadata.h\"
+int main()
+{
+    if (0 == ANDROID_SENSOR_OPAQUE_RAW_SIZE_MAXIMUM_RESOLUTION)
+        return -1;
+    return 0;
+}")
+
+check_cxx_source_compiles("${SRC}"
+  HAS_ANDROID_SENSOR_OPAQUE_RAW_SIZE_MAXIMUM_RESOLUTION)
 
 # GStreamer plugin.
 set(GST_QMMFSRC_PLUGIN gstqtiqmmfsrc)
@@ -54,9 +70,6 @@ target_compile_definitions(${GST_QMMFSRC_PLUGIN} PRIVATE
   GST_VIDEO_MAX_WIDTH="${GST_VIDEO_MAX_WIDTH}"
   GST_VIDEO_MAX_HEIGHT="${GST_VIDEO_MAX_HEIGHT}"
   GST_VIDEO_MAX_FPS="${GST_VIDEO_MAX_FPS}"
-  $<$<STREQUAL:${CAMERA_METADATA_VERSION},1.0>:CAMERA_METADATA_1_0>
-  $<$<STREQUAL:${CAMERA_METADATA_VERSION},1.1>:CAMERA_METADATA_1_1>
-  $<$<STREQUAL:${CAMERA_METADATA_VERSION},1.0ns>:CAMERA_METADATA_1_0_NS>
   $<$<BOOL:${GST_VIDEO_YUY2_FORMAT_ENABLE}>:GST_VIDEO_YUY2_FORMAT_ENABLE>
   $<$<BOOL:${GST_VIDEO_UYVY_FORMAT_ENABLE}>:GST_VIDEO_UYVY_FORMAT_ENABLE>
   $<$<BOOL:${GST_VIDEO_P010_10LE_FORMAT_ENABLE}>:GST_VIDEO_P010_10LE_FORMAT_ENABLE>
@@ -70,6 +83,7 @@ target_compile_definitions(${GST_QMMFSRC_PLUGIN} PRIVATE
   $<$<BOOL:${FEATURE_LOGICAL_CAMERA_SENSOR_SWITCH}>:FEATURE_LOGICAL_CAMERA_SENSOR_SWITCH>
   $<$<BOOL:${FEATURE_OFFLINE_IFE_SUPPORT}>:FEATURE_OFFLINE_IFE_SUPPORT>
   $<$<BOOL:${FEATURE_SW_TNR}>:FEATURE_SW_TNR> # TODO: Remove the target specific flag.
+  $<$<BOOL:${HAS_ANDROID_SENSOR_OPAQUE_RAW_SIZE_MAXIMUM_RESOLUTION}>:HAS_ANDROID_SENSOR_OPAQUE_RAW_SIZE_MAXIMUM_RESOLUTION>
 )
 
 target_include_directories(${GST_QMMFSRC_PLUGIN} PRIVATE
@@ -91,6 +105,7 @@ target_link_libraries(${GST_QMMFSRC_PLUGIN} PRIVATE
   ${GST_ALLOC_LIBRARIES}
   ${GST_QCOM_UTILS_LIBRARIES}
   ${GST_QCOM_VIDEO_LIBRARIES}
+  gstqticamerabase
 )
 
 install(
@@ -100,4 +115,3 @@ install(
               GROUP_EXECUTE GROUP_READ
               WORLD_EXECUTE WORLD_READ
 )
-

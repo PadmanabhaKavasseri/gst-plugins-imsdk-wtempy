@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8.2)
+cmake_minimum_required(VERSION 3.16)
 project(GST_PLUGIN_QTI_OSS_JPEGENC
   VERSION ${GST_PLUGINS_QTI_OSS_VERSION}
   LANGUAGES C CXX
@@ -25,7 +25,7 @@ pkg_check_modules(GST_QCOM_VIDEO
 pkg_check_modules(GST_QCOM_ALLOC
   REQUIRED gstreamer-qcom-oss-allocators-1.0>=1.0.0)
 
-# Generate configuration header file.
+# Generate configuration header file with plugin describing definitions
 configure_file(config.h.in config.h @ONLY)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
@@ -42,13 +42,6 @@ set(GST_QTI_JPEG_ENC gstqtijpegenc)
 add_library(${GST_QTI_JPEG_ENC} SHARED
   jpegenc.c
   jpegenc-context.cc
-)
-
-# Add target specific precompiler defintions.
-target_compile_definitions(${GST_QTI_JPEG_ENC} PRIVATE
-  $<$<STREQUAL:${CAMERA_METADATA_VERSION},1.0>:CAMERA_METADATA_1_0>
-  $<$<STREQUAL:${CAMERA_METADATA_VERSION},1.1>:CAMERA_METADATA_1_1>
-  $<$<STREQUAL:${CAMERA_METADATA_VERSION},1.0ns>:CAMERA_METADATA_1_0_NS>
 )
 
 target_include_directories(${GST_QTI_JPEG_ENC} PUBLIC
