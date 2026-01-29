@@ -1,1 +1,4 @@
 build/
+ghost/build/
+ghost/__pycache__/
+*.pyc
